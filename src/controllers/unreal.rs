@@ -11,6 +11,7 @@ use bevy::{
     render::prelude::*,
     transform::components::Transform,
 };
+use bevy::render::camera::Camera3d;
 use serde::{Deserialize, Serialize};
 
 #[derive(Default)]
@@ -43,13 +44,13 @@ pub struct UnrealCameraBundle {
     #[bundle]
     look_transform: LookTransformBundle,
     #[bundle]
-    perspective: PerspectiveCameraBundle,
+    perspective: PerspectiveCameraBundle<Camera3d>,
 }
 
 impl UnrealCameraBundle {
     pub fn new(
         controller: UnrealCameraController,
-        mut perspective: PerspectiveCameraBundle,
+        mut perspective: PerspectiveCameraBundle<Camera3d>,
         eye: Vec3,
         target: Vec3,
     ) -> Self {
