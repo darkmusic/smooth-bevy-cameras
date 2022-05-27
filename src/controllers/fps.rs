@@ -5,7 +5,7 @@ use bevy::{
     ecs::{bundle::Bundle, prelude::*},
     input::{mouse::MouseMotion, prelude::*},
     math::prelude::*,
-    render::prelude::*,
+    render::{camera::Camera3d, prelude::*},
     transform::components::Transform,
 };
 use bevy::render::camera::Camera3d;
@@ -27,8 +27,10 @@ impl FpsCameraPlugin {
 impl Plugin for FpsCameraPlugin {
     fn build(&self, app: &mut App) {
         let app = app
+            .add_system_to_stage(CoreStage::PreUpdate, on_controller_enabled_changed)
             .add_system(control_system)
             .add_event::<ControlEvent>();
+
         if !self.override_input_system {
             app.add_system(default_input_map);
         }
@@ -57,7 +59,7 @@ impl FpsCameraBundle {
         Self {
             controller,
             look_transform: LookTransformBundle {
-                transform: LookTransform { eye, target },
+                transform: LookTransform::new(eye, target),
                 smoother: Smoother::new(controller.smoothing_weight),
             },
             perspective,
@@ -90,6 +92,8 @@ pub enum ControlEvent {
     TranslateEye(Vec3),
 }
 
+define_on_controller_enabled_changed!(FpsCameraController);
+
 pub fn default_input_map(
     mut events: EventWriter<ControlEvent>,
     keyboard: Res<Input<KeyCode>>,
@@ -97,21 +101,18 @@ pub fn default_input_map(
     controllers: Query<&FpsCameraController>,
 ) {
     // Can only control one camera at a time.
-    let controller = if let Some(controller) = controllers.iter().next() {
+    let controller = if let Some(controller) = controllers.iter().find(|c| {
+        c.enabled
+    }) {
         controller
     } else {
         return;
     };
     let FpsCameraController {
-        enabled,
         translate_sensitivity,
         mouse_rotate_sensitivity,
         ..
     } = *controller;
-
-    if !enabled {
-        return;
-    }
 
     let mut cursor_delta = Vec2::ZERO;
     for event in mouse_motion_events.iter() {
@@ -144,14 +145,15 @@ pub fn control_system(
     mut cameras: Query<(&FpsCameraController, &mut LookTransform)>,
 ) {
     // Can only control one camera at a time.
-    let (controller, mut transform) =
-        if let Some((controller, transform)) = cameras.iter_mut().next() {
-            (controller, transform)
+    let mut transform =
+        if let Some((_, transform)) = cameras.iter_mut().find(|c| {
+            c.0.enabled
+        }) {
+            transform
         } else {
             return;
         };
 
-    if controller.enabled {
         let look_vector = transform.look_direction().unwrap();
         let mut look_angles = LookAngles::from_vector(look_vector);
 
@@ -177,7 +179,4 @@ pub fn control_system(
         look_angles.assert_not_looking_up();
 
         transform.target = transform.eye + transform.radius() * look_angles.unit_vector();
-    } else {
-        events.iter(); // Drop the events.
-    }
 }
