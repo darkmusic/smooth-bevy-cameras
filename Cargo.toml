@@ -18,7 +18,6 @@ path = "../bevy"
 # version = "0.7"
 # rev = "f3de12bc"
 # branch = "main"
-features = ["bevy_render"]
 default-features = false
 
 [dev-dependencies.bevy]
@@ -27,7 +26,7 @@ path = "../bevy"
 # git = "https://github.com/bevyengine/bevy"
 # rev = "f3de12bc"
 # branch = "main"
-features = ["bevy_core_pipeline", "bevy_pbr", "bevy_winit", "bevy_gltf"]
+features = ["bevy_core_pipeline", "bevy_pbr", "bevy_winit", "bevy_gltf", "bevy_render"]
 default-features = false
 
 [target.'cfg(target_os = "linux")'.dev-dependencies.bevy]
