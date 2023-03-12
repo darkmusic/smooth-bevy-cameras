@@ -11,7 +11,6 @@ use bevy::{
     time::Time,
     transform::components::Transform,
 };
-use serde::{Deserialize, Serialize};
 
 #[derive(Default)]
 pub struct UnrealCameraPlugin {
@@ -29,7 +28,7 @@ impl UnrealCameraPlugin {
 impl Plugin for UnrealCameraPlugin {
     fn build(&self, app: &mut App) {
         let app = app
-            .add_system_to_stage(CoreStage::PreUpdate, on_controller_enabled_changed)
+            .add_system(on_controller_enabled_changed.in_base_set(CoreSet::PreUpdate))
             .add_system(control_system)
             .add_event::<ControlEvent>();
         if !self.override_input_system {
@@ -47,14 +46,14 @@ pub struct UnrealCameraBundle {
 }
 
 impl UnrealCameraBundle {
-    pub fn new(controller: UnrealCameraController, eye: Vec3, target: Vec3) -> Self {
+    pub fn new(controller: UnrealCameraController, eye: Vec3, target: Vec3, up: Vec3) -> Self {
         // Make sure the transform is consistent with the controller to start.
-        let transform = Transform::from_translation(eye).looking_at(target, Vec3::Y);
+        let transform = Transform::from_translation(eye).looking_at(target, up);
 
         Self {
             controller,
             look_transform: LookTransformBundle {
-                transform: LookTransform::new(eye, target),
+                transform: LookTransform::new(eye, target, up),
                 smoother: Smoother::new(controller.smoothing_weight),
             },
             transform,
@@ -63,7 +62,8 @@ impl UnrealCameraBundle {
 }
 
 /// A camera controlled with the mouse in the same way as Unreal Engine's viewport controller.
-#[derive(Clone, Component, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Component, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct UnrealCameraController {
     /// Whether to process input or ignore it
     pub enabled: bool,
@@ -238,11 +238,10 @@ pub fn control_system(
         return;
     };
 
-    let look_vector;
-    match transform.look_direction() {
-        Some(safe_look_vector) => look_vector = safe_look_vector,
+    let look_vector = match transform.look_direction() {
+        Some(safe_look_vector) => safe_look_vector,
         None => return,
-    }
+    };
     let mut look_angles = LookAngles::from_vector(look_vector);
 
     let dt = time.delta_seconds();
