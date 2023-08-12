@@ -66,6 +66,7 @@ pub struct FpsCameraController {
     pub mouse_rotate_sensitivity: Vec2,
     pub translate_sensitivity: f32,
     pub smoothing_weight: f32,
+    pub eye: Vec3,
 }
 
 impl Default for FpsCameraController {
@@ -75,6 +76,7 @@ impl Default for FpsCameraController {
             mouse_rotate_sensitivity: Vec2::splat(0.2),
             translate_sensitivity: 2.0,
             smoothing_weight: 0.9,
+            eye: Vec3::new(0., 0., 0.),
         }
     }
 }
@@ -133,12 +135,12 @@ pub fn default_input_map(
 
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
-    mut cameras: Query<(&FpsCameraController, &mut LookTransform)>,
+    mut cameras: Query<(&mut FpsCameraController, &mut LookTransform)>,
     time: Res<Time>,
 ) {
     // Can only control one camera at a time.
-    let mut transform = if let Some((_, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-        transform
+    let (mut controller, mut transform) = if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+        (controller, transform)
     } else {
         return;
     };
@@ -162,6 +164,7 @@ pub fn control_system(
             ControlEvent::TranslateEye(delta) => {
                 // Translates up/down (Y) left/right (X) and forward/back (Z).
                 transform.eye += dt * delta.x * rot_x + dt * delta.y * rot_y + dt * delta.z * rot_z;
+                controller.eye = transform.eye;
             }
         }
     }
