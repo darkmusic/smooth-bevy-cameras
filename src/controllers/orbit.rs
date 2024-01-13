@@ -44,8 +44,7 @@ impl Plugin for OrbitCameraPlugin {
 pub struct OrbitCameraBundle {
     controller: OrbitCameraController,
     look_transform: LookTransformBundle,
-    #[bundle]
-    perspective: Camera3dBundle,
+    transform: Transform,
 }
 
 impl OrbitCameraBundle {
@@ -59,7 +58,7 @@ impl OrbitCameraBundle {
                 transform: LookTransform::new(eye, target, up),
                 smoother: Smoother::new(controller.smoothing_weight),
             },
-            perspective,
+            transform,
         }
     }
 }

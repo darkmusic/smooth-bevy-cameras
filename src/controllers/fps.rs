@@ -41,8 +41,7 @@ impl Plugin for FpsCameraPlugin {
 pub struct FpsCameraBundle {
     controller: FpsCameraController,
     look_transform: LookTransformBundle,
-    #[bundle]
-    perspective: Camera3dBundle,
+    transform: Transform,
 }
 
 impl FpsCameraBundle {
@@ -56,7 +55,7 @@ impl FpsCameraBundle {
                 transform: LookTransform::new(eye, target, up),
                 smoother: Smoother::new(controller.smoothing_weight),
             },
-            perspective,
+            transform,
         }
     }
 }
@@ -139,12 +138,12 @@ pub fn default_input_map(
 
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
-    mut cameras: Query<(&mut FpsCameraController, &mut LookTransform)>,
+    mut cameras: Query<(&FpsCameraController, &mut LookTransform)>,
     time: Res<Time>,
 ) {
     // Can only control one camera at a time.
-    let (mut controller, mut transform) = if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-        (controller, transform)
+    let mut transform = if let Some((_, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+        transform
     } else {
         return;
     };

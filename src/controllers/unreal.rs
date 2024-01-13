@@ -43,8 +43,7 @@ impl Plugin for UnrealCameraPlugin {
 pub struct UnrealCameraBundle {
     controller: UnrealCameraController,
     look_transform: LookTransformBundle,
-    #[bundle]
-    perspective: Camera3dBundle,
+    transform: Transform,
 }
 
 impl UnrealCameraBundle {
@@ -58,7 +57,7 @@ impl UnrealCameraBundle {
                 transform: LookTransform::new(eye, target, up),
                 smoother: Smoother::new(controller.smoothing_weight),
             },
-            perspective,
+            transform,
         }
     }
 }
