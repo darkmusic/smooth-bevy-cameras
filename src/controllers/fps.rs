@@ -138,15 +138,16 @@ pub fn default_input_map(
 
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
-    mut cameras: Query<(&FpsCameraController, &mut LookTransform)>,
+    mut cameras: Query<(&mut FpsCameraController, &mut LookTransform)>,
     time: Res<Time>,
 ) {
     // Can only control one camera at a time.
-    let mut transform = if let Some((_, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-        transform
-    } else {
-        return;
-    };
+    let (mut controller, mut transform) =
+        if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+            (controller, transform)
+        } else {
+            return;
+        };
 
     let look_vector = transform.look_direction().unwrap();
     let mut look_angles = LookAngles::from_vector(look_vector);
