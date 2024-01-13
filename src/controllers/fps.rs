@@ -2,9 +2,11 @@ use crate::{LookAngles, LookTransform, LookTransformBundle, Smoother};
 
 use bevy::{
     app::prelude::*,
-    ecs::{bundle::Bundle, prelude::*},
+    ecs::prelude::*,
     input::{mouse::MouseMotion, prelude::*},
     math::prelude::*,
+    prelude::ReflectDefault,
+    reflect::Reflect,
     time::Time,
     transform::components::Transform,
 };
@@ -60,8 +62,9 @@ impl FpsCameraBundle {
 }
 
 /// Your typical first-person camera controller.
-#[derive(Clone, Component, Copy, Debug)]
+#[derive(Clone, Component, Copy, Debug, Reflect)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[reflect(Component, Default, Debug)]
 pub struct FpsCameraController {
     pub enabled: bool,
     pub mouse_rotate_sensitivity: Vec2,
@@ -109,7 +112,7 @@ pub fn default_input_map(
     } = *controller;
 
     let mut cursor_delta = Vec2::ZERO;
-    for event in mouse_motion_events.iter() {
+    for event in mouse_motion_events.read() {
         cursor_delta += event.delta;
     }
 
@@ -155,7 +158,7 @@ pub fn control_system(
     let rot_z = yaw_rot * Vec3::Z;
 
     let dt = time.delta_seconds();
-    for event in events.iter() {
+    for event in events.read() {
         match event {
             ControlEvent::Rotate(delta) => {
                 // Rotates with pitch and yaw.
