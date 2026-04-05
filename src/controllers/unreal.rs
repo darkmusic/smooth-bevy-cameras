@@ -88,6 +88,7 @@ pub struct UnrealCameraController {
 
     /// The greater, the slower to follow input
     pub smoothing_weight: f32,
+    pub eye: Vec3,
 }
 
 impl Default for UnrealCameraController {
@@ -100,6 +101,7 @@ impl Default for UnrealCameraController {
             keyboard_mvmt_sensitivity: 10.0,
             keyboard_mvmt_wheel_sensitivity: 5.0,
             smoothing_weight: 0.7,
+            eye: Vec3::ZERO,
         }
     }
 }
@@ -232,14 +234,15 @@ pub fn default_input_map(
 pub fn control_system(
     time: Res<Time>,
     mut events: MessageReader<ControlMessage>,
-    mut cameras: Query<(&UnrealCameraController, &mut LookTransform)>,
+    mut cameras: Query<(&mut UnrealCameraController, &mut LookTransform)>,
 ) {
     // Can only control one camera at a time.
-    let mut transform = if let Some((_, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-        transform
-    } else {
-        return;
-    };
+    let (mut controller, mut transform) =
+        if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+            (controller, transform)
+        } else {
+            return;
+        };
 
     let look_vector = match transform.look_direction() {
         Some(safe_look_vector) => safe_look_vector,
@@ -254,6 +257,7 @@ pub fn control_system(
                 // Translates forward/backward and rotates about the Y axis.
                 look_angles.add_yaw(dt * -delta.x);
                 transform.eye += dt * delta.y * look_vector;
+                controller.eye = transform.eye;
             }
             ControlMessage::Rotate(delta) => {
                 // Rotates with pitch and yaw.
@@ -267,6 +271,7 @@ pub fn control_system(
                 // Translates up/down and left/right (X).
                 let up = transform.up;
                 transform.eye -= dt * delta.x * rot_x - dt * delta.y * up;
+                controller.eye = transform.eye;
             }
         }
     }

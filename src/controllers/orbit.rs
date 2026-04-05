@@ -74,6 +74,7 @@ pub struct OrbitCameraController {
     pub mouse_wheel_zoom_sensitivity: f32,
     pub pixels_per_line: f32,
     pub smoothing_weight: f32,
+    pub eye: Vec3,
 }
 
 impl Default for OrbitCameraController {
@@ -85,6 +86,7 @@ impl Default for OrbitCameraController {
             smoothing_weight: 0.8,
             enabled: true,
             pixels_per_line: 53.0,
+            eye: Vec3::ZERO,
         }
     }
 }
@@ -152,12 +154,12 @@ pub fn default_input_map(
 pub fn control_system(
     time: Res<Time>,
     mut messages: MessageReader<ControlMessage>,
-    mut cameras: Query<(&OrbitCameraController, &mut LookTransform, &Transform)>,
+    mut cameras: Query<(&mut OrbitCameraController, &mut LookTransform, &Transform)>,
 ) {
     // Can only control one camera at a time.
-    let (mut transform, scene_transform) =
-        if let Some((_, transform, scene_transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-            (transform, scene_transform)
+    let (mut controller, mut transform, scene_transform) =
+        if let Some((controller, transform, scene_transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+            (controller, transform, scene_transform)
         } else {
             return;
         };
@@ -188,4 +190,5 @@ pub fn control_system(
 
     let new_radius = (radius_scalar * radius).min(1000000.0).max(0.001);
     transform.eye = transform.target + new_radius * look_angles.unit_vector();
+    controller.eye = transform.eye;
 }
