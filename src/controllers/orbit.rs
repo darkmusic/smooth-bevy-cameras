@@ -172,7 +172,9 @@ pub fn control_system(
     for event in messages.read() {
         match event {
             ControlMessage::Orbit(delta) => {
-                look_angles.add_yaw(dt * -delta.x);
+                // Orbit stores angles for the vector (eye - target) via `from_vector(-look_direction)`.
+                // Using the same `add_yaw(dt * -delta.x)` as FPS would invert horizontal orbit vs mouse/FPS.
+                look_angles.add_yaw(dt * delta.x);
                 look_angles.add_pitch(dt * delta.y);
             }
             ControlMessage::TranslateTarget(delta) => {
